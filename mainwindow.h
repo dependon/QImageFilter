@@ -30,10 +30,21 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+    void on_duibiSlider_valueChanged(int value);
+
+    void on_lightSlider_valueChanged(int value);
+
+    void on_GrayScaleBtn_clicked();
+
+    void on_coolBtn_clicked();
+
+    void on_warnBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
 
     QImage *m_img{nullptr};
+    QImage *m_imgCopy{nullptr};
 };
 
 #endif // MAINWINDOW_H

@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle(tr("QImageFilter"));
 }
 
 MainWindow::~MainWindow()
@@ -20,35 +21,14 @@ void MainWindow::on_cv1Btn_clicked()
 {
     if(m_img)
     {
-        for(int height=0;height<m_img->height();height++)
+        if(m_imgCopy)
         {
-            for(int width=0;width<m_img->width();width++)
-            {
-                QColor frontColor=m_img->pixel(width,height);
-                QColor afterColor;
-                float frontred=frontColor.red();
-                float frontgreen=frontColor.green();
-                float frontblue=frontColor.blue();
-                float afterred=0.393 *frontred+0.769 *frontgreen+0.189 *frontblue;
-                float aftergreen=0.349 *frontred+0.686 *frontgreen+0.168 *frontblue;
-                float afterblue=0.272 *frontred+0.534 *frontgreen+0.131 *frontblue;
-
-                if(afterred>255)
-                {
-                    afterred=255;
-                }
-                if(aftergreen>255)
-                {
-                    aftergreen=255;
-                }
-                if(afterblue>255)
-                {
-                    afterblue=255;
-                }
-                m_img->setPixel(width,height,qRgb(afterred,aftergreen,afterblue));
-            }
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
         }
-        ui->labelcl->setPixmap(QPixmap::fromImage(*m_img).scaled(800,600));
+        m_imgCopy=new QImage(*m_img);
+        oldImage(m_img,m_imgCopy);
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
         update();
     }
 }
@@ -72,37 +52,21 @@ void MainWindow::on_fanseBtn_clicked()
 
     if(m_img)
     {
-        for(int height=0;height<m_img->height();height++)
+        if(m_imgCopy)
         {
-            for(int width=0;width<m_img->width();width++)
-            {
-                QColor frontColor=m_img->pixel(width,height);
-                QColor afterColor;
-                float afterred=255-frontColor.red();
-                float aftergreen=255-frontColor.green();
-                float afterblue=255-frontColor.blue();
-                if(afterred>255)
-                {
-                    afterred=255;
-                }
-                if(aftergreen>255)
-                {
-                    aftergreen=255;
-                }
-                if(afterblue>255)
-                {
-                    afterblue=255;
-                }
-                m_img->setPixel(width,height,qRgb(afterred,aftergreen,afterblue));
-            }
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
         }
-        ui->labelcl->setPixmap(QPixmap::fromImage(*m_img).scaled(800,600));
+        m_imgCopy=new QImage(*m_img);
+        InverseColorImage(m_img,m_imgCopy);
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
         update();
     }
 }
 
 void MainWindow::on_fushBtn_clicked()
 {
+    return;
     if(m_img)
     {
         for(int height=0;height<m_img->height();height++)
@@ -141,6 +105,7 @@ void MainWindow::on_fushBtn_clicked()
 
 void MainWindow::on_pushButton_clicked()
 {
+    return;
     int index=0;
     while(index++ <1)
     if(m_img)
@@ -154,23 +119,10 @@ void MainWindow::on_pushButton_clicked()
                 float frontred=frontColor.red();
                 float frontgreen=frontColor.green();
                 float frontblue=frontColor.blue();
-//                float afterred=0.393 *frontred+0.769 *frontgreen+0.189 *frontblue;
-//                float aftergreen=0.349 *frontred+0.686 *frontgreen+0.168 *frontblue;
-//                float afterblue=0.272 *frontred+0.534 *frontgreen+0.131 *frontblue;
                 float afterred=0.7 *frontred+0.769 *frontgreen+0.189 *frontblue;
                 float aftergreen=0.7 *frontred+0.686 *frontgreen+0.168 *frontblue;
                 float afterblue=0.5 *frontred+0.534 *frontgreen+0.131 *frontblue;
-//                if(frontred>100 ||frontgreen>100 ||frontblue>100)
-//                {
-//                    afterred=255;
-//                    aftergreen=255;
-//                    afterblue=255;
-//                }
-//                else {
-//                    afterred=0;
-//                    aftergreen=0;
-//                    afterblue=0;
-//                }
+
                 if(afterred>255)
                 {
                     afterred=0;
@@ -221,4 +173,86 @@ void MainWindow::on_pushButton_2_clicked()
     }
 
 
+}
+
+void MainWindow::on_duibiSlider_valueChanged(int value)
+{
+    if(m_img)
+    {
+        if(m_imgCopy)
+        {
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
+        }
+        m_imgCopy=new QImage(*m_img);
+        lightContrastImage(m_img,m_imgCopy,ui->duibiSlider->value(),ui->lightSlider->value());
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
+        update();
+    }
+
+}
+
+void MainWindow::on_lightSlider_valueChanged(int value)
+{
+
+    if(m_img)
+    {
+        if(m_imgCopy)
+        {
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
+        }
+        m_imgCopy=new QImage(*m_img);
+        lightContrastImage(m_img,m_imgCopy,ui->duibiSlider->value(),ui->lightSlider->value());
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
+        update();
+    }
+}
+
+void MainWindow::on_GrayScaleBtn_clicked()
+{
+    if(m_img)
+    {
+        if(m_imgCopy)
+        {
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
+        }
+        m_imgCopy=new QImage(*m_img);
+        GrayScaleImage(m_img,m_imgCopy);
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
+        update();
+    }
+}
+
+void MainWindow::on_coolBtn_clicked()
+{
+    if(m_img)
+    {
+        if(m_imgCopy)
+        {
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
+        }
+        m_imgCopy=new QImage(*m_img);
+        coolImage(m_img,m_imgCopy);
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
+        update();
+    }
+}
+
+void MainWindow::on_warnBtn_clicked()
+{
+    if(m_img)
+    {
+        if(m_imgCopy)
+        {
+            delete  m_imgCopy;
+            m_imgCopy=nullptr;
+        }
+        m_imgCopy=new QImage(*m_img);
+        warnImage(m_img,m_imgCopy);
+        ui->labelcl->setPixmap(QPixmap::fromImage(*m_imgCopy).scaled(800,600));
+        update();
+    }
 }
