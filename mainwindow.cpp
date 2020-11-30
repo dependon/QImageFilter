@@ -213,11 +213,10 @@ void MainWindow::on_pushButton_2_clicked()
 {
     if(m_img)
     {
-        QImage *img=m_img;
+        QImage *img=new QImage(*m_img);
         QImageD_RunBEEPSHorizontalVertical(m_img,img);
-        m_img=img;
         qDebug()<<QDateTime::currentSecsSinceEpoch();
-        ui->labelcl->setPixmap(QPixmap::fromImage(*m_img).scaled(800,600));
+        ui->labelcl->setPixmap(QPixmap::fromImage(*img).scaled(800,600));
         update();
     }
 

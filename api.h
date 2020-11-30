@@ -723,7 +723,10 @@ void QImageD_RunBEEPSHorizontalVertical(QImage *src,QImage *toSrc,double spatial
     if(!src){
         return ;
     }
-    toSrc=src;
+    if(!toSrc)
+    {
+        toSrc=new QImage(*src);
+    }
     double c=-0.5/(photometricStandardDeviation * photometricStandardDeviation); //-1/2 *光度标准偏差的平方
     double mu=spatialDecay/(2-spatialDecay);
 
@@ -885,6 +888,7 @@ void QImageD_RunBEEPSHorizontalVertical(QImage *src,QImage *toSrc,double spatial
         rGreen[k]= (rGreen[k]+pGreen[k])*rho0- gGreen[k]*init_gain_mu;
 
         rBlue[k]= (rBlue[k]+pBlue[k])*rho0- gBlue[k]*init_gain_mu;
+
     }
 
     m = 0;
@@ -897,20 +901,9 @@ void QImageD_RunBEEPSHorizontalVertical(QImage *src,QImage *toSrc,double spatial
             data2Red[n]=rRed[m];
             data2Green[n]=rGreen[m];
             data2Blue[n]=rBlue[m];
-
+            toSrc->setPixel(k1,k2,qRgb(data2Red[n],data2Green[n],data2Blue[n]));
             m++;
             n += width;
-        }
-    }
-
-    int index=0;
-    for (int k1=0;k1<height;++k1)
-    {
-        for (int k2=0;k2<width;++k2)
-        {
-
-            toSrc->setPixel(k2,k1,qRgb(data2Red[index],data2Green[index],data2Blue[index]));
-            index++;
         }
     }
 
