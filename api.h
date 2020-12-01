@@ -443,7 +443,7 @@ void GrayScaleImage(QImage *img,QImage *imgCopy)
     for(int y = 0; y<imgCopy->height(); y++){
         line = (QRgb *)imgCopy->scanLine(y);
         for(int x = 0; x<imgCopy->width(); x++){
-            int average = (qRed(line[x]) + qGreen(line[x]) + qRed(line[x]))/3;
+            int average = (qRed(line[x]) + qGreen(line[x]) + qBlue(line[x]))/3;
             imgCopy->setPixel(x,y, qRgb(average, average, average));
         }
 
@@ -488,6 +488,7 @@ void InverseColorImage(QImage *img,QImage *imgCopy)
 
     }
 }
+
 void oldImage(QImage *img,QImage *imgCopy)
 {
     if(!img||!imgCopy){
