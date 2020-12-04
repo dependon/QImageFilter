@@ -94,6 +94,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="skinBtn">
+        <property name="text">
+         <string>皮肤</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item row="4" column="0">

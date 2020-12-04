@@ -40,6 +40,8 @@ private slots:
 
     void on_warnBtn_clicked();
 
+    void on_skinBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
 
