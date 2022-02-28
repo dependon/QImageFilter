@@ -1,5 +1,25 @@
-#ifndef API_H
-#define API_H
+/*
+ * Copyright (C) 2020 ~ 2021 LiuMingHang.
+ *
+ * Author:     LiuMingHang <liuminghang0821@gmail.com>
+ *
+ * Maintainer: LiuMingHang <liuminghang0821@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef IIMAGEAPI_H
+#define IIMAGEAPI_H
 
 #include <stdio.h>
 #include <iostream>
@@ -7,31 +27,69 @@
 #include <math.h>
 #include <QVector>
 #include <QImage>
-#include <QDebug>
-#include <QThread>
-#include "application.h"
-#include <QThread>
+#include <QColor>
 
-class api:public QObject
+class QImageAPI
 {
-    Q_OBJECT
-public:
-    static int Bound(int range_left,int data,int range_right);
-    static void RGBToYUV(int Red, int Green, int Blue, int* Y,int* U,int* V);;
-    static void YUVToRGB(int Y, int U, int V, int* Red, int* Green, int* Blue);;
-    //垂直方向递归原始函数
-    static void RunBEEPSVerticalHorizontal(double *data,int width,int height,double spatialDecay,double *exp_table,double *g_table);
-    //水平方向递归原始函数
-    static void RunBEEPSHorizontalVertical(double *data,int width,int height,double spatialDecay,double *exptable,double *g_table);
-    //qimage磨皮
-    static void QImageD_RunBEEPSHorizontalVertical(QImage *img,QImage *imgCopy,double spatialDecay=0.02,double photometricStandardDeviation=10);
-    static void warnImage(QImage *img,QImage *imgCopy,int index=30);
-    static void coolImage(QImage *img,QImage *imgCopy,int index=30);
-    static void GrayScaleImage(QImage *img,QImage *imgCopy);
-    static void lightContrastImage(QImage *img,QImage *imgCopy,int light=100,int Contrast=150);
-    static void InverseColorImage(QImage *img,QImage *imgCopy);
-    static void oldImage(QImage *img,QImage *imgCopy);
 
+public:
+
+    QImageAPI();
+    //Take RGB maximum
+    static int RgbMax(int red, int green, int blue);
+    //Take RGB minimum
+    static int RgbMin(int red, int green, int blue);
+    //Boundary judgment
+    static int Bound(int range_left, int data, int range_right);
+    //qimage Skin grinding
+//    static void QImageD_RunBEEPSHorizontalVertical(QImage *img, QImage *imgCopy, double spatialDecay = 0.02, double photometricStandardDeviation = 10);
+    static QImage QImageD_RunBEEPSHorizontalVertical(const QImage &img, double spatialDecay = 0.02, double photometricStandardDeviation = 10);
+    //Warm color filter
+    static QImage warnImage(const QImage &img, int index = 30);
+    //Cool color filter
+    static QImage coolImage(const QImage &img,  int index = 30);
+    //Grayscale filter
+    static QImage GrayScaleImage(const QImage &img);
+    //Brightness and saturation
+    static QImage lightContrastImage(const QImage &img, int light = 100, int Contrast = 150);
+    //Anti color filter
+    static QImage InverseColorImage(const QImage &img);
+    //Old photo filter
+    static QImage oldImage(const QImage &img);
+
+    //laplacian sharpening
+    static QImage LaplaceSharpen(const QImage &img);
+
+    //Sobel Edge Detector
+    static QImage SobelEdge(const QImage &img);
+
+    //Greyscale
+    static QImage GreyScale(const QImage &img);
+
+    //Contour acquisition
+    static QImage ContourExtraction(const QImage &img);
+
+    //Flip horizontally
+    static QImage Horizontal(const QImage &img);
+
+    //Flip vertical
+    static QImage Vertical(const QImage &origin);
+
+    //Binarization
+    static QImage Binaryzation(const QImage &img);
+
+    //Metal wire drawing effect
+    static QImage Metal(const QImage &img);
+
+    //Adjust image brightness
+    static QImage Brightness(int delta, const QImage &img);
+
+    //Transparency
+    static QImage transparencyImg(int delta, const QImage &img);
+
+    //Saturation (- 100 - 100)
+    static QImage StaurationImg(const QImage &origin, int saturation);
 };
 
-#endif // API_H
+
+#endif // IIMAGEAPI_H

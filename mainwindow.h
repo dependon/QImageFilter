@@ -46,7 +46,7 @@ private:
     Ui::MainWindow *ui;
 
     QImage *m_img{nullptr};
-    QImage *m_imgCopy{nullptr};
+    QImage m_imgCopy{nullptr};
 };
 
 #endif // MAINWINDOW_H
