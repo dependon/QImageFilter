@@ -42,6 +42,16 @@ private slots:
 
     void on_skinBtn_clicked();
 
+    void on_Horizontal_clicked();
+
+    void on_vertical_clicked();
+
+    void on_lapace_clicked();
+
+    void on_sobel_clicked();
+
+    void on_stauration_clicked();
+
 private:
     Ui::MainWindow *ui;
 

@@ -234,3 +234,57 @@ void MainWindow::on_skinBtn_clicked()
         update();
     }
 }
+
+void MainWindow::on_Horizontal_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::Horizontal(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_vertical_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::Vertical(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_lapace_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::LaplaceSharpen(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_sobel_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::SobelEdge(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_stauration_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::StaurationImg(*m_img, 50);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_transparency_valueChanged(int value)
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::transparencyImg(value, *m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
