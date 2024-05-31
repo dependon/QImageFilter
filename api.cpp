@@ -1533,3 +1533,68 @@ QImage QImageAPI::applyMedianFilter(const QImage &inputImage)
 
     return outputImage;
 }
+
+
+
+
+// 高斯函数
+double gaussian(double x, double sigma)
+{
+    return exp(-(x * x) / (2 * sigma * sigma));
+}
+
+// 计算双边滤波权重
+double bilateralFilterWeight(const QImage &inputImage, int x, int y, int centerX, int centerY, double sigmaS, double sigmaR)
+{
+    double spatialFactor = gaussian(sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY)), sigmaS);
+
+    QColor centerColor(inputImage.pixel(centerX, centerY));
+    QColor currentColor(inputImage.pixel(x, y));
+    double colorFactor = gaussian(centerColor.red() - currentColor.red(), sigmaR) *
+                         gaussian(centerColor.green() - currentColor.green(), sigmaR) *
+                         gaussian(centerColor.blue() - currentColor.blue(), sigmaR);
+
+    return spatialFactor * colorFactor;
+}
+
+// 对图像进行双边滤波
+QImage QImageAPI::applyBilateralFilter(const QImage &inputImage, double sigmaS, double sigmaR)
+{
+    QImage outputImage = inputImage;
+
+    // 双边滤波核大小
+    const int filterSize = 5;
+
+    int halfSize = filterSize / 2;
+
+    for (int y = halfSize; y < inputImage.height() - halfSize; ++y) {
+        for (int x = halfSize; x < inputImage.width() - halfSize; ++x) {
+            double totalWeight = 0.0;
+            double sumRed = 0.0, sumGreen = 0.0, sumBlue = 0.0;
+
+            for (int i = -halfSize; i <= halfSize; ++i) {
+                for (int j = -halfSize; j <= halfSize; ++j) {
+                    double weight = bilateralFilterWeight(inputImage, x, y, x + i, y + j, sigmaS, sigmaR);
+                    totalWeight += weight;
+
+                    QColor color(inputImage.pixel(x + i, y + j));
+                    sumRed += color.red() * weight;
+                    sumGreen += color.green() * weight;
+                    sumBlue += color.blue() * weight;
+                }
+            }
+
+            // 归一化并更新输出图像中的像素值
+            sumRed /= totalWeight;
+            sumGreen /= totalWeight;
+            sumBlue /= totalWeight;
+
+            QColor newColor(qBound(0, static_cast<int>(sumRed), 255),
+                            qBound(0, static_cast<int>(sumGreen), 255),
+                            qBound(0, static_cast<int>(sumBlue), 255));
+            outputImage.setPixel(x, y, newColor.rgb());
+        }
+    }
+
+    return outputImage;
+}

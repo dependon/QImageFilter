@@ -347,3 +347,17 @@ void MainWindow::on_zzBtn_clicked()
         update();
     }
 }
+
+void MainWindow::on_BilateralBtn_clicked()
+{
+    if (m_img) {
+
+       // 应用双边滤波
+        double sigmaS = ui->sigmaSEdit->text().toDouble(); // 空间域标准差
+        double sigmaR = ui->sigmaREdit->text().toDouble(); // 灰度值域标准差
+        m_imgCopy = QImageAPI::applyBilateralFilter(*m_img,sigmaS,sigmaR);
+
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}

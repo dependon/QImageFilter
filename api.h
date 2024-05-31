@@ -127,6 +127,9 @@ public:
 
     // 对图像进行中值滤波
     static QImage applyMedianFilter(const QImage &inputImage);
+
+    //test
+    static QImage applyBilateralFilter(const QImage &inputImage, double sigmaS, double sigmaR);
 };
 
 

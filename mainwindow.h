@@ -77,6 +77,8 @@ private slots:
 
     void on_zzBtn_clicked();
 
+    void on_BilateralBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
 
