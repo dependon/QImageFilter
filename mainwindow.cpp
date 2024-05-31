@@ -4,39 +4,12 @@
 #include <QDebug>
 #include "api.h"
 #include <QDateTime>
-
+#include <QStandardPaths>
 #include <QDebug>
-void skinImage(QImage *img, QImage *imgCopy)
-{
-    if (!img || !imgCopy) {
-        return ;
-    }
+#include <QRegExp>
+#include <QRegExpValidator>
+#include <QIntValidator>
 
-    QRgb *line;
-    for (int y = 0; y < imgCopy->height(); y++) {
-        line = (QRgb *)imgCopy->scanLine(y);
-        for (int x = 0; x < imgCopy->width(); x++) {
-            int R = qRed(line[x]);
-            int G = qGreen(line[x]);
-            int B = qBlue(line[x]);
-            //            int Y=0.257 *qRed(line[x])+0.564 *qGreen(line[x])+0.098 *qBlue(line[x])+16;
-            //            int Cb=-0.148 *qRed(line[x])-0.291 *qGreen(line[x])+0.439 *qBlue(line[x])+128;
-            //            int Cr=0.439 *qRed(line[x])-0.368 *qGreen(line[x])-0.071 *qBlue(line[x])+128;
-
-            int Y = ((R << 6) + (R << 1) + (G << 7) + (G << 4) + (B << 4) + (B << 3) + 3840) >> 8;
-            int Cb = (-((R << 5) + (R << 2) + (R << 1)) - ((G << 6) + (G << 3) + (G << 2)) + ((B << 6) + (R << 5) + (R << 4)) + 32768) >> 8;
-            int Cr = (((R << 6) + (R << 5) + (R << 4)) - ((G << 6) + (G << 4) + (G << 3) + (G << 2) + (G << 1)) - ((B << 4) + (B << 1)) + 32768) >> 8;
-
-            //            qDebug()<<Cb<<Cb1;
-            //            qDebug()<<Cr<<Cr1;
-            if ((Cb > 77 && Cb < 127) && (Cr > 133 && Cr < 173)) {
-                //imgCopy->setPixel(x,y, qRgb(0, 0, 0));
-            } else
-                imgCopy->setPixel(x, y, qRgb(255, 255, 255));
-        }
-
-    }
-}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -44,6 +17,26 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle(tr("QImageFilter"));
+
+    QRegularExpression regExp("^([0-9]|[1-9][0-9]|[1][0-9]{2}|2[0-4][0-9]|25[0-5])$");
+    QValidator *validator = new QRegularExpressionValidator(regExp, this);
+
+    ui->R1->setValidator(validator);
+    ui->R2->setValidator(validator);
+    ui->G1->setValidator(validator);
+    ui->G2->setValidator(validator);
+    ui->B1->setValidator(validator);
+    ui->B2->setValidator(validator);
+    ui->GaussianBlurEdit->setValidator(validator);
+
+    QString path = "F:/lmh/github_code/QImageFilter/test/1.jpeg";
+    if (m_img) {
+        delete m_img;
+        m_img = nullptr;
+    }
+    m_img = new QImage(path);
+
+    ui->label->setPixmap(QPixmap::fromImage(*m_img).scaled(800, 600));
 }
 
 MainWindow::~MainWindow()
@@ -75,7 +68,6 @@ void MainWindow::on_openBtn_clicked()
 
 void MainWindow::on_fanseBtn_clicked()
 {
-
     if (m_img) {
         m_imgCopy = QImageAPI::InverseColorImage(*m_img);
         ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
@@ -83,66 +75,6 @@ void MainWindow::on_fanseBtn_clicked()
     }
 }
 
-void MainWindow::on_fushBtn_clicked()
-{
-    return;
-    if (m_img) {
-        for (int height = 0; height < m_img->height(); height++) {
-            for (int width = 0; width < m_img->width(); width++) {
-
-
-                QColor frontColor = m_img->pixel(width, height);
-                QColor afterColor;
-                float frontred = frontColor.red();
-                float frontgreen = frontColor.green();
-                float frontblue = frontColor.blue();
-                if ((frontred / frontgreen) < 0.7) {
-                    m_img->setPixel(width, height, qRgb(0, 0, 0));
-                    qDebug() << 1111;
-                } else {
-//                    qDebug()<<frontred <<frontblue;
-                }
-
-            }
-        }
-        ui->labelcl->setPixmap(QPixmap::fromImage(*m_img));
-        update();
-    }
-}
-
-void MainWindow::on_pushButton_clicked()
-{
-    return;
-    int index = 0;
-    while (index++ < 1)
-        if (m_img) {
-            for (int height = 0; height < m_img->height(); height++) {
-                for (int width = 0; width < m_img->width(); width++) {
-                    QColor frontColor = m_img->pixel(width, height);
-                    QColor afterColor;
-                    float frontred = frontColor.red();
-                    float frontgreen = frontColor.green();
-                    float frontblue = frontColor.blue();
-                    float afterred = 0.7 * frontred + 0.769 * frontgreen + 0.189 * frontblue;
-                    float aftergreen = 0.7 * frontred + 0.686 * frontgreen + 0.168 * frontblue;
-                    float afterblue = 0.5 * frontred + 0.534 * frontgreen + 0.131 * frontblue;
-
-                    if (afterred > 255) {
-                        afterred = 0;
-                    }
-                    if (aftergreen > 255) {
-                        aftergreen = 0;
-                    }
-                    if (afterblue > 255) {
-                        afterblue = 255;
-                    }
-                    m_img->setPixel(width, height, qRgb(afterred, aftergreen, afterblue));
-                }
-            }
-            ui->labelcl->setPixmap(QPixmap::fromImage(*m_img).scaled(800, 600));
-            update();
-        }
-}
 #include <QPainter>
 void MainWindow::on_gugaiBtn_clicked()
 {
@@ -229,7 +161,7 @@ void MainWindow::on_skinBtn_clicked()
 {
     if (m_img) {
         m_imgCopy = *m_img;
-        skinImage(m_img, &m_imgCopy);
+        m_imgCopy = QImageAPI::skinImage(*m_img);
         ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
         update();
     }
@@ -284,6 +216,133 @@ void MainWindow::on_transparency_valueChanged(int value)
 {
     if (m_img) {
         m_imgCopy = QImageAPI::transparencyImg(value, *m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_TransparentBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::Transparent2Png(*m_img, QColor(ui->R1->text().toInt(),ui->G1->text().toInt(),ui->B1->text().toInt()));
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_saveBtn_clicked()
+{
+//    QString strDir = QFileDialog::getExistingDirectory(
+//                    this
+//                    ,tr("Open Directory")
+//                    ,"/home"
+//                    ,QFileDialog::ShowDirsOnly|QFileDialog::DontResolveSymlinks);
+    QString desktop = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/Desktop";
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Image"), desktop, tr(".png")); //选择路径
+    if (!filename.contains(".png")) {
+        filename = filename + ".png";
+    }
+    m_imgCopy.save(filename);
+}
+
+void MainWindow::on_changeColorBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::changeColor2Png(*m_img, QColor(ui->R1->text().toInt(),ui->G1->text().toInt(),ui->B1->text().toInt())
+                                               ,QColor(ui->R2->text().toInt(),ui->G2->text().toInt(),ui->B2->text().toInt()));
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    if (m_img) {
+//        m_imgCopy = QImageAPI::changeColor2Png(*m_img, QColor(220,83,39),QColor(249,188,61));
+        m_imgCopy = QImageAPI::smooth(*m_img, 0.4);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+
+void MainWindow::on_GaussianBlurBtn_clicked()
+{
+    int x = ui->GaussianBlurEdit->text().toInt();
+    if (m_img) {
+        m_imgCopy = QImageAPI::applyGaussianBlur(*m_img, x);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_maiskBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::applyMosaic(*m_img,ui->maiskEdit->text().toInt());
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_byjcBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::detectEdges(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_lktqBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::ContourExtraction(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_hisBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::equalizeHistogram(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_greayHisBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::drawHistogram(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_averageBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::applyMeanFilter(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_GaussianFilterBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::applyGaussianFilter(*m_img,ui->GaussianFilterEdit->text().toInt());
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_zzBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::applyMedianFilter(*m_img);
         ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
         update();
     }

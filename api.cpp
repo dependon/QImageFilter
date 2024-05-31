@@ -23,6 +23,10 @@
 #include <QPainter>
 #include <QDebug>
 #include <QDateTime>
+#include <QtMath>
+#include <QRgb>
+#include <QColor>
+
 typedef struct  {
     uint8_t R;
     uint8_t G;
@@ -35,6 +39,19 @@ typedef struct {
     float S;
     float V;
 } HSV;
+
+// Prewitt算子
+const int prewitt_x[3][3] = {
+    {-1, 0, 1},
+    {-1, 0, 1},
+    {-1, 0, 1}
+};
+
+const int prewitt_y[3][3] = {
+    {-1, -1, -1},
+    {0, 0, 0},
+    {1, 1, 1}
+};
 
 static void RGB_TO_HSV(const RGBL *input, HSV *output) // convert RGB value to HSV value
 {
@@ -461,6 +478,10 @@ QImage QImageAPI::coolImage(const QImage &img,  int index)
 
 QImage QImageAPI::GrayScaleImage(const QImage &img)
 {
+#if 1
+    QImage grayImage = img.convertToFormat(QImage::Format_Grayscale8);
+    return grayImage;
+#else
     qint64 startTime = QDateTime::currentMSecsSinceEpoch();
 
     QImage imgCopy;
@@ -484,6 +505,7 @@ QImage QImageAPI::GrayScaleImage(const QImage &img)
     }
     qDebug() << "结束:" << QDateTime::currentMSecsSinceEpoch() - startTime;
     return imgCopy;
+#endif
 }
 
 QImage QImageAPI::lightContrastImage(const QImage &img,  int light, int Contrast)
@@ -945,4 +967,569 @@ QImage QImageAPI::Vertical(const QImage &origin)
     newImage = origin.mirrored(false, true);
     qDebug() << "结束:" << QDateTime::currentMSecsSinceEpoch() - startTime;
     return newImage;
+}
+
+QImage QImageAPI::Transparent2Png(const QImage &bmp,QColor color)
+{
+    //BMP颜色格式转换成RGBA颜色格式
+    QImage rebmp  = bmp.convertToFormat(QImage::Format_RGBA8888_Premultiplied,Qt::NoFormatConversion);
+    int bmpWidth = bmp.width();
+    int bmpHeight = bmp.height();
+    //透明颜色
+    QColor bmpBack= color;
+    QColor bmpBackA(254,254,254,0);
+    for(int i=0;i< bmpWidth;++i)
+    {
+        for(int j=0;j<bmpHeight;++j)
+        {
+            //如果身份证背景色等于 color,则设置为透明色 Color(254,254,254,0)
+            if( bmp.pixelColor(i,j)== bmpBack)
+            {
+                rebmp.setPixelColor(i,j,bmpBackA);
+            }
+        }
+    }
+    return rebmp;
+}
+
+QImage QImageAPI::changeColor2Png(const QImage &bmp, QColor oldcolor, QColor newcolor)
+{
+    //BMP颜色格式转换成RGBA颜色格式
+    QImage rebmp  = bmp.convertToFormat(QImage::Format_RGBA8888_Premultiplied,Qt::NoFormatConversion);
+    int bmpWidth = bmp.width();
+    int bmpHeight = bmp.height();
+    //透明颜色
+    QColor bmpBack= oldcolor;
+    QColor bmpBackA(newcolor);
+    for(int i=0;i< bmpWidth;++i)
+    {
+        for(int j=0;j<bmpHeight;++j)
+        {
+            if(bmp.pixelColor(i,j)==bmpBack)
+            {
+                rebmp.setPixelColor(i,j,bmpBackA);
+            }
+        }
+    }
+    return rebmp;
+}
+
+// 声明一个函数，用于对输入的图像进行磨皮处理
+QImage QImageAPI::smooth(QImage inputImage, float sigma)
+{
+    int ksize = sigma * 5;
+    if (ksize % 2 == 0) ksize += 1; // 去除偶数卷积核
+    QImage outputImage = inputImage.copy();
+
+    // 处理过程中使用的活动窗口滤波器
+    QVector<float> kernel;
+    const float PI = 3.141592653589793f;
+    for (int i = -ksize / 2; i <= ksize / 2; i++)
+    {
+        kernel.append(1.0f / (2.0f * PI * sigma * sigma) * exp(-(i * i) / (2.0f * sigma * sigma)));
+    }
+    float sum_kernel = std::accumulate(kernel.constBegin(), kernel.constEnd(), 0.0f);
+
+    int width = inputImage.width();
+    int height = inputImage.height();
+    int bytesPerPixel = inputImage.depth() / 8;
+
+    for (int y = 0; y < height; ++y)
+    {
+        // 获取每一行的首地址
+        uchar *inputScanLine = inputImage.scanLine(y);
+        uchar *outputScanLine = outputImage.scanLine(y);
+
+        // 处理每个像素点的 RGB 值
+        for (int x = 0; x < width; ++x)
+        {
+            QVector<float> r, g, b;
+            float sum_r = 0, sum_g = 0, sum_b = 0;
+            // 遍历窗口内的像素点
+            for (int i = -ksize / 2; i <= ksize / 2; i++)
+            {
+                int px = qBound(0, x + i, width - 1);
+                uchar *pixel = inputScanLine + px * bytesPerPixel;
+                r.append(pixel[2]);
+                g.append(pixel[1]);
+                b.append(pixel[0]);
+            }
+            // 按照像素点所在位置计算权重和，对 RGB 值进行同步处理
+            for (int i = 0; i < r.size(); i++)
+            {
+                sum_r += kernel[i] * r[i];
+                sum_g += kernel[i] * g[i];
+                sum_b += kernel[i] * b[i];
+            }
+            sum_r = qBound(0.0f, sum_r / sum_kernel, 255.0f);
+            sum_g = qBound(0.0f, sum_g / sum_kernel, 255.0f);
+            sum_b = qBound(0.0f, sum_b / sum_kernel, 255.0f);
+
+            // 将处理好的像素点写入图像中
+            uchar *outputPixel = outputScanLine + x * bytesPerPixel;
+            outputPixel[2] = static_cast<uchar>(sum_r);
+            outputPixel[1] = static_cast<uchar>(sum_g);
+            outputPixel[0] = static_cast<uchar>(sum_b);
+        }
+    }
+    return outputImage;
+}
+
+// 高斯模糊函数
+QImage QImageAPI::applyGaussianBlur(const QImage &oldimage, int radius)
+{
+    QImage image(oldimage);
+    if (image.isNull() || radius <= 0)
+        return QImage();
+
+    QImage resultImage = image;
+    const int size = radius * 2 + 1;
+    const int sigma = radius / 2;
+    const double sigmaSq = sigma * sigma;
+    QVector<double> kernel(size);
+
+    // 构建高斯核
+    double sum = 0.0;
+    for (int i = -radius; i <= radius; ++i)
+    {
+        double value = exp(-(i * i) / (2 * sigmaSq)) / (sqrt(2 * M_PI) * sigma);
+        kernel[i + radius] = value;
+        sum += value;
+    }
+
+    // 归一化
+    for (int i = 0; i < size; ++i)
+    {
+        kernel[i] /= sum;
+    }
+
+    // 水平方向模糊
+    for (int y = 0; y < image.height(); ++y)
+    {
+        for (int x = radius; x < image.width() - radius; ++x)
+        {
+            double red = 0, green = 0, blue = 0;
+            for (int i = -radius; i <= radius; ++i)
+            {
+                QRgb pixel = image.pixel(x + i, y);
+                red += qRed(pixel) * kernel[i + radius];
+                green += qGreen(pixel) * kernel[i + radius];
+                blue += qBlue(pixel) * kernel[i + radius];
+            }
+            resultImage.setPixel(x, y, qRgb(red, green, blue));
+        }
+    }
+
+    // 垂直方向模糊
+    for (int x = 0; x < image.width(); ++x)
+    {
+        for (int y = radius; y < image.height() - radius; ++y)
+        {
+            double red = 0, green = 0, blue = 0;
+            for (int i = -radius; i <= radius; ++i)
+            {
+                QRgb pixel = resultImage.pixel(x, y + i);
+                red += qRed(pixel) * kernel[i + radius];
+                green += qGreen(pixel) * kernel[i + radius];
+                blue += qBlue(pixel) * kernel[i + radius];
+            }
+            image.setPixel(x, y, qRgb(red, green, blue));
+        }
+    }
+    return image;
+}
+
+
+QImage QImageAPI::applyMosaic(const QImage& oldImage, int blockSize) {
+    if (oldImage.isNull() || blockSize <= 0) {
+        return QImage(); // 返回空图片或处理错误
+    }
+
+    // 确保blockSize是偶数，并且不会使图像尺寸变得太小
+    blockSize = (blockSize % 2 == 0) ? blockSize : blockSize + 1;
+    if (oldImage.width() < blockSize || oldImage.height() < blockSize) {
+        return oldImage; // 如果blockSize太大，直接返回原图
+    }
+
+    // 计算新图片的尺寸
+    int newWidth = oldImage.width() / blockSize * blockSize;
+    int newHeight = oldImage.height() / blockSize * blockSize;
+
+    QImage newImage(newWidth, newHeight, oldImage.format());
+
+    // 遍历每个块
+    for (int y = 0; y < newHeight; y += blockSize) {
+        for (int x = 0; x < newWidth; x += blockSize) {
+            // 计算块的平均颜色
+            QRgb averageColor = qRgb(0, 0, 0); // 初始化平均颜色为黑色
+            int totalR = 0, totalG = 0, totalB = 0;
+            int count = 0;
+
+            for (int by = 0; by < blockSize && y + by < oldImage.height(); ++by) {
+                for (int bx = 0; bx < blockSize && x + bx < oldImage.width(); ++bx) {
+                    QRgb pixel = oldImage.pixel(x + bx, y + by);
+                    totalR += qRed(pixel);
+                    totalG += qGreen(pixel);
+                    totalB += qBlue(pixel);
+                    ++count;
+                }
+            }
+
+            if (count > 0) { // 确保count不是0，避免除以0
+                averageColor = qRgb(totalR / count, totalG / count, totalB / count);
+            }
+
+            // 用平均颜色填充整个块
+            for (int by = 0; by < blockSize && y + by < newImage.height(); ++by) {
+                for (int bx = 0; bx < blockSize && x + bx < newImage.width(); ++bx) {
+                    newImage.setPixel(x + bx, y + by, averageColor);
+                }
+            }
+        }
+    }
+
+    return newImage;
+}
+
+QImage QImageAPI:: applyPrewitt(const QImage &image)
+{
+    QImage result(image.size(), QImage::Format_Grayscale8);
+    result.fill(Qt::black);
+
+    // 确保图像是灰度图像
+    QImage grayImage;
+    if (image.format() != QImage::Format_Grayscale8) {
+        grayImage = image.convertToFormat(QImage::Format_Grayscale8);
+    } else {
+        grayImage = image;
+    }
+
+    int width = grayImage.width();
+    int height = grayImage.height();
+
+    for (int y = 1; y < height - 1; ++y) {
+        for (int x = 1; x < width - 1; ++x) {
+            int gx = 0, gy = 0;
+            for (int i = -1; i <= 1; ++i) {
+                for (int j = -1; j <= 1; ++j) {
+                    QRgb pixel = grayImage.pixel(x + j, y + i);
+                    int gray = qGray(pixel); // 从QRgb转换为灰度值
+                    gx += gray * prewitt_x[i + 1][j + 1];
+                    gy += gray * prewitt_y[i + 1][j + 1];
+                }
+            }
+
+            // 计算梯度幅度（这里使用简单的平方和的平方根作为近似，但为简化可以使用绝对值之和）
+            int gradientMagnitude = qAbs(gx) + qAbs(gy);
+
+            // 设置阈值以决定边缘的亮度
+            int threshold = 5; // 你可以调整这个阈值
+            if (gradientMagnitude > threshold) {
+                result.setPixel(x, y, 255); // 使用白色表示边缘
+            }
+        }
+    }
+
+    return result;
+}
+
+// Sobel算子
+int sobelOperator(const QImage &image, int x, int y)
+{
+    int gx = 0, gy = 0;
+
+    // Sobel算子
+    int sobelX[3][3] = {{-1, 0, 1},
+                        {-2, 0, 2},
+                        {-1, 0, 1}};
+    int sobelY[3][3] = {{-1, -2, -1},
+                        {0, 0, 0},
+                        {1, 2, 1}};
+
+    // 遍历Sobel算子的3x3邻域
+    for (int i = -1; i <= 1; ++i) {
+        for (int j = -1; j <= 1; ++j) {
+            // 获取邻域内的像素值，超出边界的像素使用0代替
+            int pixelX = qBound(0, x + i, image.width() - 1);
+            int pixelY = qBound(0, y + j, image.height() - 1);
+            QColor pixelColor(image.pixel(pixelX, pixelY));
+
+            // 计算梯度值
+            gx += sobelX[i + 1][j + 1] * pixelColor.red();
+            gy += sobelY[i + 1][j + 1] * pixelColor.red();
+        }
+    }
+
+    // 计算梯度的幅值
+    int gradientMagnitude = qAbs(gx) + qAbs(gy);
+
+    // 对梯度值进行归一化处理，确保在[0, 255]范围内
+    gradientMagnitude = qBound(0, gradientMagnitude, 255);
+
+    return gradientMagnitude;
+}
+
+// 边缘检测函数
+QImage QImageAPI::detectEdges(const QImage &inputImage)
+{
+    QImage outputImage(inputImage.size(), inputImage.format());
+
+    for (int y = 0; y < inputImage.height(); ++y) {
+        for (int x = 0; x < inputImage.width(); ++x) {
+            // 对每个像素应用Sobel算子
+            int gradientMagnitude = sobelOperator(inputImage, x, y);
+            // 将梯度值作为边缘强度，用灰度值表示
+            outputImage.setPixelColor(x, y, QColor(gradientMagnitude, gradientMagnitude, gradientMagnitude));
+        }
+    }
+
+    return outputImage;
+}
+
+QImage QImageAPI::skinImage(const QImage &img)
+{
+    QImage imgCopy = img;
+
+    QRgb *line;
+    for (int y = 0; y < imgCopy.height(); y++) {
+        line = (QRgb *)imgCopy.scanLine(y);
+        for (int x = 0; x < imgCopy.width(); x++) {
+            int R = qRed(line[x]);
+            int G = qGreen(line[x]);
+            int B = qBlue(line[x]);
+
+            int Y = ((R << 6) + (R << 1) + (G << 7) + (G << 4) + (B << 4) + (B << 3) + 3840) >> 8;
+            int Cb = (-((R << 5) + (R << 2) + (R << 1)) - ((G << 6) + (G << 3) + (G << 2)) + ((B << 6) + (R << 5) + (R << 4)) + 32768) >> 8;
+            int Cr = (((R << 6) + (R << 5) + (R << 4)) - ((G << 6) + (G << 4) + (G << 3) + (G << 2) + (G << 1)) - ((B << 4) + (B << 1)) + 32768) >> 8;
+
+            if ((Cb > 77 && Cb < 127) && (Cr > 133 && Cr < 173)) {
+                //imgCopy.setPixel(x,y, qRgb(0, 0, 0));
+            } else
+                imgCopy.setPixel(x, y, qRgb(255, 255, 255));
+        }
+
+    }
+    return imgCopy;
+}
+
+// 直方图均衡化函数
+QImage QImageAPI::equalizeHistogram(const QImage &inputImage)
+{
+    // 获取图像的大小
+    int width = inputImage.width();
+    int height = inputImage.height();
+
+    // 计算像素总数
+    int totalPixels = width * height;
+
+    // 计算直方图
+    int histogram[256] = {0};
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            QColor pixelColor(inputImage.pixel(x, y));
+            int intensity = qRound(0.299 * pixelColor.red() + 0.587 * pixelColor.green() + 0.114 * pixelColor.blue());
+            histogram[intensity]++;
+        }
+    }
+
+    // 计算累积分布函数
+    float cumulativeDistribution[256] = {0.0f};
+    cumulativeDistribution[0] = static_cast<float>(histogram[0]) / totalPixels;
+    for (int i = 1; i < 256; ++i) {
+        cumulativeDistribution[i] = cumulativeDistribution[i - 1] + static_cast<float>(histogram[i]) / totalPixels;
+    }
+
+    // 对每个像素进行直方图均衡化
+    QImage outputImage(inputImage.size(), inputImage.format());
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            QColor pixelColor(inputImage.pixel(x, y));
+            int intensity = qRound(0.299 * pixelColor.red() + 0.587 * pixelColor.green() + 0.114 * pixelColor.blue());
+            float newIntensity = 255.0f * cumulativeDistribution[intensity];
+            outputImage.setPixel(x, y, qRgb(newIntensity, newIntensity, newIntensity));
+        }
+    }
+
+    return outputImage;
+}
+
+
+
+
+// 绘制直方图
+QImage QImageAPI::drawHistogram(const QImage &image)
+{
+    QVector<int> histogram(256, 0);
+
+    // 计算图像的灰度直方图
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            QColor color(image.pixel(x, y));
+            int intensity = qGray(color.rgb());
+            histogram[intensity]++;
+        }
+    }
+
+    int maxValue = *std::max_element(histogram.constBegin(), histogram.constEnd());
+
+    QImage histogramImage(256, maxValue, QImage::Format_RGB32);
+    histogramImage.fill(Qt::white);
+
+    QPainter painter(&histogramImage);
+    painter.setPen(Qt::black);
+
+    for (int i = 0; i < histogram.size(); ++i) {
+        int height = histogram[i] * histogramImage.height() / maxValue;
+        painter.drawLine(i, histogramImage.height(), i, histogramImage.height() - height);
+    }
+
+    return histogramImage;
+}
+
+
+// 定义一个简单的滤波核，这里使用3x3的均值滤波核
+const int filterSize = 3;
+const int filter[filterSize][filterSize] = {
+    {1, 1, 1},
+    {1, 1, 1},
+    {1, 1, 1}
+};
+
+// 对图像进行均值滤波
+QImage QImageAPI::applyMeanFilter(const QImage &inputImage)
+{
+    QImage outputImage = inputImage;
+
+    for (int y = 1; y < inputImage.height() - 1; ++y) {
+        for (int x = 1; x < inputImage.width() - 1; ++x) {
+            int sumRed = 0, sumGreen = 0, sumBlue = 0;
+
+            // 遍历滤波核
+            for (int i = 0; i < filterSize; ++i) {
+                for (int j = 0; j < filterSize; ++j) {
+                    QColor color(inputImage.pixel(x + i - 1, y + j - 1));
+                    sumRed += color.red() * filter[i][j];
+                    sumGreen += color.green() * filter[i][j];
+                    sumBlue += color.blue() * filter[i][j];
+                }
+            }
+
+            // 计算平均值
+            int avgRed = sumRed / (filterSize * filterSize);
+            int avgGreen = sumGreen / (filterSize * filterSize);
+            int avgBlue = sumBlue / (filterSize * filterSize);
+
+            // 将新值设置为输出图像中的像素
+            QColor newColor(avgRed, avgGreen, avgBlue);
+            outputImage.setPixel(x, y, newColor.rgb());
+        }
+    }
+
+    return outputImage;
+}
+
+// 高斯滤波核大小
+const int GSfilterSize = 5;
+
+// 生成高斯滤波核
+double generateGaussian(int x, int y, double sigma)
+{
+    return exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * M_PI * sigma * sigma);
+}
+
+void generateGaussianFilter(double kernel[][GSfilterSize], double sigma)
+{
+    double sum = 0.0;
+    int halfSize = GSfilterSize / 2;
+
+    for (int x = -halfSize; x <= halfSize; ++x) {
+        for (int y = -halfSize; y <= halfSize; ++y) {
+            kernel[x + halfSize][y + halfSize] = generateGaussian(x, y, sigma);
+            sum += kernel[x + halfSize][y + halfSize];
+        }
+    }
+
+    for (int i = 0; i < GSfilterSize; ++i) {
+        for (int j = 0; j < GSfilterSize; ++j) {
+            kernel[i][j] /= sum;
+        }
+    }
+}
+
+// 对图像进行高斯滤波
+QImage QImageAPI::applyGaussianFilter(const QImage &inputImage, double sigma)
+{
+    QImage outputImage = inputImage;
+
+    double kernel[GSfilterSize][GSfilterSize];
+    generateGaussianFilter(kernel, sigma);
+
+    int halfSize = GSfilterSize / 2;
+
+    for (int y = halfSize; y < inputImage.height() - halfSize; ++y) {
+        for (int x = halfSize; x < inputImage.width() - halfSize; ++x) {
+            double sumRed = 0.0, sumGreen = 0.0, sumBlue = 0.0;
+
+            for (int i = 0; i < GSfilterSize; ++i) {
+                for (int j = 0; j < GSfilterSize; ++j) {
+                    QColor color(inputImage.pixel(x + i - halfSize, y + j - halfSize));
+                    sumRed += color.red() * kernel[i][j];
+                    sumGreen += color.green() * kernel[i][j];
+                    sumBlue += color.blue() * kernel[i][j];
+                }
+            }
+
+            // 更新输出图像中的像素值
+            QColor newColor(qBound(0, static_cast<int>(sumRed), 255),
+                            qBound(0, static_cast<int>(sumGreen), 255),
+                            qBound(0, static_cast<int>(sumBlue), 255));
+            outputImage.setPixel(x, y, newColor.rgb());
+        }
+    }
+
+    return outputImage;
+}
+
+
+// 对图像进行中值滤波
+QImage QImageAPI::applyMedianFilter(const QImage &inputImage)
+{
+    // 中值滤波核大小
+    const int filterSize = 3;
+
+    QImage outputImage = inputImage;
+
+    int halfSize = filterSize / 2;
+
+    for (int y = halfSize; y < inputImage.height() - halfSize; ++y) {
+        for (int x = halfSize; x < inputImage.width() - halfSize; ++x) {
+            // 收集周围像素的颜色值
+            QVector<int> redValues, greenValues, blueValues;
+
+            for (int i = 0; i < filterSize; ++i) {
+                for (int j = 0; j < filterSize; ++j) {
+                    QColor color(inputImage.pixel(x + i - halfSize, y + j - halfSize));
+                    redValues.append(color.red());
+                    greenValues.append(color.green());
+                    blueValues.append(color.blue());
+                }
+            }
+
+            // 对颜色值进行排序
+            std::sort(redValues.begin(), redValues.end());
+            std::sort(greenValues.begin(), greenValues.end());
+            std::sort(blueValues.begin(), blueValues.end());
+
+            // 选择排序后的中间值作为新的像素值
+            int medianRed = redValues.at(redValues.size() / 2);
+            int medianGreen = greenValues.at(greenValues.size() / 2);
+            int medianBlue = blueValues.at(blueValues.size() / 2);
+
+            // 更新输出图像中的像素值
+            QColor newColor(medianRed, medianGreen, medianBlue);
+            outputImage.setPixel(x, y, newColor.rgb());
+        }
+    }
+
+    return outputImage;
 }

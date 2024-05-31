@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QImage>
+class QIntValidator;
+class QLineEdit;
 namespace Ui {
 class MainWindow;
 }
@@ -21,10 +23,6 @@ private slots:
     void on_openBtn_clicked();
 
     void on_fanseBtn_clicked();
-
-    void on_fushBtn_clicked();
-
-    void on_pushButton_clicked();
 
     void on_gugaiBtn_clicked();
 
@@ -51,6 +49,33 @@ private slots:
     void on_sobel_clicked();
 
     void on_stauration_clicked();
+
+    void on_transparency_valueChanged(int value);
+
+    void on_TransparentBtn_clicked();
+
+    void on_saveBtn_clicked();
+
+    void on_changeColorBtn_clicked();
+
+    void on_pushButton_3_clicked();
+    void on_GaussianBlurBtn_clicked();
+
+    void on_maiskBtn_clicked();
+
+    void on_byjcBtn_clicked();
+
+    void on_lktqBtn_clicked();
+
+    void on_hisBtn_clicked();
+
+    void on_greayHisBtn_clicked();
+
+    void on_averageBtn_clicked();
+
+    void on_GaussianFilterBtn_clicked();
+
+    void on_zzBtn_clicked();
 
 private:
     Ui::MainWindow *ui;

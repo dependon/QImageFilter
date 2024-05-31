@@ -42,7 +42,6 @@ public:
     //Boundary judgment
     static int Bound(int range_left, int data, int range_right);
     //qimage Skin grinding
-//    static void QImageD_RunBEEPSHorizontalVertical(QImage *img, QImage *imgCopy, double spatialDecay = 0.02, double photometricStandardDeviation = 10);
     static QImage QImageD_RunBEEPSHorizontalVertical(const QImage &img, double spatialDecay = 0.02, double photometricStandardDeviation = 10);
     //Warm color filter
     static QImage warnImage(const QImage &img, int index = 30);
@@ -66,7 +65,7 @@ public:
     //Greyscale
     static QImage GreyScale(const QImage &img);
 
-    //Contour acquisition
+    //Contour acquisition 轮廓提取
     static QImage ContourExtraction(const QImage &img);
 
     //Flip horizontally
@@ -89,6 +88,45 @@ public:
 
     //Saturation (- 100 - 100)
     static QImage StaurationImg(const QImage &origin, int saturation);
+
+    //指定颜色透明
+    static QImage Transparent2Png(const QImage &bmp,QColor color);
+
+    //指定颜色透明
+    static QImage changeColor2Png(const QImage &bmp,QColor oldcolor,QColor newcolor);
+
+    //磨皮算法
+    static QImage smooth(QImage inputImage, float sigma);
+
+    //高斯模糊(有点慢)
+    static QImage applyGaussianBlur(const QImage &oldimage, int radius);
+
+    //马赛克
+    static QImage applyMosaic(const QImage &oldImage, int blockSize);
+
+    //边缘检测 Prewitt
+    static QImage applyPrewitt(const QImage &image);
+
+    //边缘检测detect
+    static QImage detectEdges(const QImage &inputImage);
+
+    //皮肤识别
+    static QImage skinImage(const QImage &img);
+
+    //直方图均衡化
+    static QImage equalizeHistogram(const QImage &inputImage);
+
+    //得到图像灰度直方图
+    static QImage drawHistogram(const QImage &image);
+
+    //均值滤波
+    static QImage applyMeanFilter(const QImage &inputImage);
+
+    // 对图像进行高斯滤波
+    static QImage applyGaussianFilter(const QImage &inputImage, double sigma);
+
+    // 对图像进行中值滤波
+    static QImage applyMedianFilter(const QImage &inputImage);
 };
 
 
