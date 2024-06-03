@@ -361,3 +361,21 @@ void MainWindow::on_BilateralBtn_clicked()
         update();
     }
 }
+
+void MainWindow::on_edgeDetectionBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::edgeDetection(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}
+
+void MainWindow::on_laplacianEdgeDetectionBtn_clicked()
+{
+    if (m_img) {
+        m_imgCopy = QImageAPI::laplacianEdgeDetection(*m_img);
+        ui->labelcl->setPixmap(QPixmap::fromImage(m_imgCopy).scaled(800, 600));
+        update();
+    }
+}

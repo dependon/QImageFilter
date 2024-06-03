@@ -128,8 +128,14 @@ public:
     // 对图像进行中值滤波
     static QImage applyMedianFilter(const QImage &inputImage);
 
-    //test
+    // 对图像进行双边滤波
     static QImage applyBilateralFilter(const QImage &inputImage, double sigmaS, double sigmaR);
+
+    // 边缘检测(Prewitt)
+    static QImage edgeDetection(const QImage &inputImage);
+
+    // 边缘检测(Laplacian)
+    static QImage laplacianEdgeDetection(const QImage &inputImage);
 };
 
 

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>965</width>
+    <width>1113</width>
     <height>642</height>
    </rect>
   </property>
@@ -159,7 +159,7 @@
       <item>
        <widget class="QPushButton" name="byjcBtn">
         <property name="text">
-         <string>边缘检测</string>
+         <string>边缘检测(sobel)</string>
         </property>
        </widget>
       </item>
@@ -649,6 +649,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="edgeDetectionBtn">
+        <property name="text">
+         <string>边缘检测(Prewitt)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="laplacianEdgeDetectionBtn">
+        <property name="text">
+         <string>边缘检测(Laplacian)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_4">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -670,7 +684,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>965</width>
+     <width>1113</width>
      <height>23</height>
     </rect>
    </property>

@@ -79,6 +79,10 @@ private slots:
 
     void on_BilateralBtn_clicked();
 
+    void on_edgeDetectionBtn_clicked();
+
+    void on_laplacianEdgeDetectionBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
 

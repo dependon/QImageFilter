@@ -1598,3 +1598,79 @@ QImage QImageAPI::applyBilateralFilter(const QImage &inputImage, double sigmaS, 
 
     return outputImage;
 }
+
+// 边缘检测函数
+QImage QImageAPI::edgeDetection(const QImage &inputImage) {
+
+    // Prewitt算子
+    int prewittKernelX[3][3] = {
+        {-1, 0, 1},
+        {-1, 0, 1},
+        {-1, 0, 1}
+    };
+
+    int prewittKernelY[3][3] = {
+        {-1, -1, -1},
+        { 0,  0,  0},
+        { 1,  1,  1}
+    };
+
+    QImage outputImage = inputImage;
+    int width = inputImage.width();
+    int height = inputImage.height();
+
+    for (int y = 1; y < height - 1; ++y) {
+        for (int x = 1; x < width - 1; ++x) {
+            int gx = 0, gy = 0;
+            for (int j = 0; j < 3; ++j) {
+                for (int i = 0; i < 3; ++i) {
+                    QColor color(inputImage.pixel(x + i - 1, y + j - 1));
+                    int gray = color.red(); // 假设图像是灰度图像，直接取红色通道
+                    gx += prewittKernelX[j][i] * gray;
+                    gy += prewittKernelY[j][i] * gray;
+                }
+            }
+            int magnitude = std::sqrt(gx * gx + gy * gy);
+            // 应用阈值
+            if (magnitude > 100) {
+                outputImage.setPixel(x, y, qRgb(255, 255, 255)); // 白色表示边缘
+            } else {
+                outputImage.setPixel(x, y, qRgb(0, 0, 0)); // 黑色表示非边缘
+            }
+        }
+    }
+
+    return outputImage;
+}
+
+
+// Laplacian边缘检测函数
+QImage QImageAPI::laplacianEdgeDetection(const QImage &inputImage)
+{
+    // Laplacian算子
+    const int laplacianKernel[3][3] = {{0, 1, 0}, {1, -4, 1}, {0, 1, 0}};
+
+    QImage outputImage(inputImage.size(), QImage::Format_RGB32);
+
+    for (int y = 1; y < inputImage.height() - 1; ++y)
+    {
+        for (int x = 1; x < inputImage.width() - 1; ++x)
+        {
+            int sum = 0;
+            // 应用Laplacian算子
+            for (int i = 0; i < 3; ++i)
+            {
+                for (int j = 0; j < 3; ++j)
+                {
+                    QRgb pixel = inputImage.pixel(x + j - 1, y + i - 1);
+                    sum += qRed(pixel) * laplacianKernel[i][j];
+                }
+            }
+            // 边缘值截断至0-255范围内
+            sum = qBound(0, sum, 255);
+            outputImage.setPixel(x, y, qRgb(sum, sum, sum));
+        }
+    }
+
+    return outputImage;
+}
