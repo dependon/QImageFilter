@@ -3,6 +3,8 @@
 
 ## 没有opencv实现QImage磨皮美颜效果
 
+![]("https://kkgithub.com/dependon/QImageFilter/blob/main/test/%E5%86%B7%E8%89%B2.png")
+
 ![](./test/图片1.png)
 
 ## 反色滤镜
